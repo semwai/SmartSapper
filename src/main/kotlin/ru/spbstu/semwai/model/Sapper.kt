@@ -21,7 +21,7 @@ class Cell(var value: CellValue) {
     var marked = false
 }
 
-class Sapper(val width: Int, val height: Int) {
+class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType)->Unit) {
     private var map = MutableList(width * height) { Cell(CellValue.Null) }
 
     private var counter = 0
@@ -33,7 +33,7 @@ class Sapper(val width: Int, val height: Int) {
             throw IllegalArgumentException("width is $width, height is $height, but x=$x, y=$y")
     }
 
-    public fun newGame() {
+    fun newGame() {
         counter = 0
         gameOver = false
         map = MutableList(width * height) { Cell(CellValue.Null) }
@@ -93,7 +93,7 @@ class Sapper(val width: Int, val height: Int) {
         map[y * width + x].marked = !map[y * width + x].marked
     }
 
-    fun openEmpty(x: Int, y: Int) {
+    private fun openEmpty(x: Int, y: Int) {
         if (x >= width || y >= height || x < 0 || y < 0 || gameOver) return
         map[y * width + x].isOpen = true
         val direct = listOf(Pair(-1, 0), Pair(0, -1), Pair(1, 0), Pair(0, 1))
@@ -108,9 +108,14 @@ class Sapper(val width: Int, val height: Int) {
 
     private fun closeGame(){
         gameOver = true
+        loseHandler(MsgType.LOSE)
         map.forEach {
             it.isOpen = true
         }
     }
 }
 
+enum class MsgType {
+    WIN,
+    LOSE
+}
