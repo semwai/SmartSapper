@@ -7,9 +7,9 @@ import javafx.stage.Stage
 import ru.spbstu.semwai.model.MsgType
 import tornadofx.*
 
-class UserApp : App() {
+class UserApp(width: Int, height: Int) : App(width, height) {
 
-    override val loseAction = { type: MsgType ->
+    override val message = { type: MsgType ->
         val alert = Alert(Alert.AlertType.INFORMATION)
         alert.title = "Сообщение"
         alert.headerText = ""
@@ -26,9 +26,7 @@ class UserApp : App() {
             add(Button("Сначала").apply {
                 style += styleFontSize18
                 setOnAction {
-                    model.newGame()
-                    cells.forEach { it.forEach { btn -> btn.style = stylebgr0 } }
-                    update()
+                    newGame()
                 }
             })
         })

@@ -13,15 +13,16 @@ enum class CellValue(var value: Int) {
     Five(5),
     Six(6),
     Seven(7),
-    Eight(8)
+    Eight(8),
+    Undefined(-2)
 }
 
-class Cell(var value: CellValue) {
+data class Cell(var value: CellValue) {
     var isOpen = false
     var marked = false
 }
 
-class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType)->Unit) {
+class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit) {
     private var map = MutableList(width * height) { Cell(CellValue.Null) }
 
     private var counter = 0
@@ -49,69 +50,99 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType)->Unit) 
 
     }
 
-    private fun calculate(x: Int, y: Int) {
-        val direct = listOf(
-                Pair(-1, -1), Pair(0, -1), Pair(1, -1),
-                Pair(-1, 0), Pair(1, 0),
-                Pair(-1, 1), Pair(0, 1), Pair(1, 1))
-        var c = 0
+    private val directsForCalculate = listOf(
+            Pair(-1, -1), Pair(0, -1), Pair(1, -1),
+            Pair(-1, 0), Pair(1, 0),
+            Pair(-1, 1), Pair(0, 1), Pair(1, 1))
 
-        direct.forEach {
+    private fun calculate(x: Int, y: Int) {
+        var c = 0
+        directsForCalculate.forEach {
             try {
-                if (getCell(x + it.first, y + it.second).value == CellValue.Bomb)
+                if (getRealCell(x + it.first, y + it.second).value == CellValue.Bomb)
                     c++
             } catch (e: Exception) {
             }
         }
-
-        if (getCell(x, y).value != CellValue.Bomb) {
+        if (getRealCell(x, y).value != CellValue.Bomb) {
             map[y * width + x] = Cell(CellValue.values()[c + 1])
         }
     }
 
-    fun getCell(x: Int, y: Int): Cell {
+    private fun getRealCell(x: Int, y: Int): Cell {
         checkArg(x, y)
         return map[y * width + x]
+    }
+
+    /*То, что получает игрок, а именно для неоткрытой клетки выдаем ему клетку с типом "неизвестно",
+    чтобы нельзя было хакнуть модель и узнать координаты всех мин*/
+    fun getCell(x: Int, y: Int): Cell {
+        checkArg(x, y)
+        val c = map[y * width + x]
+        return when (c.isOpen) {
+            true -> c
+            false -> c.copy(value = CellValue.Undefined).apply { marked = c.marked }
+        }
+
     }
 
     fun click(x: Int, y: Int) {
         if (gameOver) return
         checkArg(x, y)
         if (map[y * width + x].isOpen) return
-
-        if (map[y * width + x].value == CellValue.Bomb){
-            closeGame()
-        }
-        map[y * width + x].isOpen = true
-        openEmpty(x, y)
         counter++
+        if (map[y * width + x].value == CellValue.Bomb) {
+            gameOver()
+        }
+
+
+        openEmpty(x, y)
     }
 
     fun mark(x: Int, y: Int) {
         if (gameOver) return
         checkArg(x, y)
         map[y * width + x].marked = !map[y * width + x].marked
+        //Если помечены только все бомбы
+        if (map.filter { it.value == CellValue.Bomb }.all { it.marked } &&
+                map.filter { it.value != CellValue.Bomb }.all { !it.marked })
+            gameWin()
     }
+
+    //Вынес за функцию чтобы не создавать массив для каждой клетки
 
     private fun openEmpty(x: Int, y: Int) {
+        val directsForOpenEmpty = listOf(Pair(-1, 0), Pair(0, -1), Pair(1, 0), Pair(0, 1))
         if (x >= width || y >= height || x < 0 || y < 0 || gameOver) return
         map[y * width + x].isOpen = true
-        val direct = listOf(Pair(-1, 0), Pair(0, -1), Pair(1, 0), Pair(0, 1))
-        direct.forEach {
+        directsForOpenEmpty.forEach {
+            //обернул в try, т.к. в граничных клетках возможен вызов за карту.
             try {
-                if (!getCell(x + it.first, y + it.second).isOpen && getCell(x, y).value == CellValue.Null)
+                val cell = getRealCell(x, y)
+                if ((!getRealCell(x + it.first, y + it.second).isOpen) && cell.value == CellValue.Null)
                     openEmpty(x + it.first, y + it.second)
+
             } catch (e: Exception) {
             }
+
         }
+
     }
 
-    private fun closeGame(){
+    private fun gameOver() {
         gameOver = true
-        loseHandler(MsgType.LOSE)
         map.forEach {
             it.isOpen = true
         }
+        loseHandler(MsgType.LOSE)
+    }
+
+    private fun gameWin() {
+        gameOver = true
+        map.forEach {
+            it.isOpen = true
+        }
+        loseHandler(MsgType.WIN)
     }
 }
 

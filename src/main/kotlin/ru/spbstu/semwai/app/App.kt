@@ -2,10 +2,9 @@ package ru.spbstu.semwai.app
 
 import javafx.application.Application
 import javafx.scene.Scene
-import javafx.scene.control.Alert
-import javafx.scene.control.Alert.AlertType
 import javafx.scene.control.Button
 import javafx.scene.input.MouseButton
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.stage.Stage
@@ -21,15 +20,15 @@ const val stylebgcGray = "-fx-background-color: #AAAAAA;"
 const val styleFontSize18 = "-fx-font-size: 18;"
 const val stylebgcGreen = "-fx-background-color: #00FF00;"
 
-abstract class App : Application() {
-    val width = 40
-    val height = 20
+abstract class App(private val width: Int = 6, private val height: Int = 5) : Application() {
+
+
     val cells = mutableListOf<MutableList<Button>>()
     val root = VBox()
 
-    abstract val loseAction: (MsgType)->Unit
+    abstract val message: (MsgType) -> Unit
 
-    lateinit var model:Sapper
+    lateinit var model: Sapper
 
     private fun create() {
         for (i in 0 until height) {
@@ -40,7 +39,7 @@ abstract class App : Application() {
                 val btn = Button()
                 btn.prefWidth = 40.0
                 btn.prefHeight = 40.0
-                btn.style = stylebgr0 + styleFontSize18
+                btn.style = stylebgr0 //+ styleFontSize18
                 btn.setOnMouseClicked {
                     if (it.button == MouseButton.PRIMARY) {
                         model.click(j, i)
@@ -56,10 +55,11 @@ abstract class App : Application() {
         update()
     }
 
-    fun update() {
+    private fun update() {
         for (i in 0 until height) {
             for (j in 0 until width) {
                 val cell = model.getCell(j, i)
+
                 if (cell.marked) {
                     cells[i][j].text = "X"
                     continue
@@ -75,6 +75,7 @@ abstract class App : Application() {
                 cells[i][j].text = when (cell.value) {
                     CellValue.Bomb -> "*"
                     CellValue.Null -> " "
+                    CellValue.Undefined -> " "
                     else -> cell.value.value.toString()
                 }
             }
@@ -82,17 +83,31 @@ abstract class App : Application() {
     }
 
     override fun start(primaryStage: Stage) {
-        model = Sapper(width, height, loseAction)
+        model = Sapper(width, height, message)
         model.newGame()
         create()
         val scene = Scene(root, 39.0 * width, 39.0 * height + 40)
 
-
-        primaryStage.title = "SmartSapper (c) github.com/semwai/SmartSapper"
-        primaryStage.isResizable = false
-        primaryStage.scene = scene
-        primaryStage.show()
+        with(primaryStage) {
+            title = "Умный сапер (c) github.com/semwai/SmartSapper"
+            isResizable = false
+            this.scene = scene
+            show()
+        }
     }
 
+    fun newGame() {
+        model.newGame()
+        cells.forEach { it.forEach { btn -> btn.style = stylebgr0 } }
+        update()
+    }
 }
 
+
+fun Button.click(button: MouseButton) {
+    this.fireEvent(MouseEvent(
+            MouseEvent.MOUSE_CLICKED, 1.0, 1.0, 1.0, 1.0, button,
+            1, true, true, true, true,
+            true, true, true, true,
+            true, true, null))
+}
