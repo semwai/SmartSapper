@@ -28,7 +28,7 @@ abstract class App(private val width: Int = 6, private val height: Int = 5) : Ap
 
     abstract val message: (MsgType) -> Unit
 
-    lateinit var model: Sapper
+    val model: Sapper by lazy { Sapper(width, height, message) }
 
     private fun create() {
         for (i in 0 until height) {
@@ -83,7 +83,6 @@ abstract class App(private val width: Int = 6, private val height: Int = 5) : Ap
     }
 
     override fun start(primaryStage: Stage) {
-        model = Sapper(width, height, message)
         model.newGame()
         create()
         val scene = Scene(root, 39.0 * width, 39.0 * height + 40)

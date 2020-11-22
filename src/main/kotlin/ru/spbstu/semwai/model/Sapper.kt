@@ -4,7 +4,7 @@ import java.lang.Exception
 import java.util.*
 
 enum class CellValue(var value: Int) {
-    Bomb(-1),
+    Bomb(100),
     Null(0),
     One(1),
     Two(2),
@@ -14,13 +14,36 @@ enum class CellValue(var value: Int) {
     Six(6),
     Seven(7),
     Eight(8),
-    Undefined(-2)
+    Undefined(10)
 }
 
 data class Cell(var value: CellValue) {
     var isOpen = false
     var marked = false
+
+    operator fun dec():Cell {
+        val newValue = when (value) {
+            //CellValue.One -> CellValue.Null
+            CellValue.Two -> CellValue.One
+            CellValue.Three -> CellValue.Two
+            CellValue.Four -> CellValue.Three
+            CellValue.Five -> CellValue.Four
+            CellValue.Six -> CellValue.Five
+            CellValue.Seven -> CellValue.Six
+            CellValue.Eight -> CellValue.Seven
+            else -> value
+        }
+        val newInstance = Cell(newValue)
+        newInstance.isOpen = this.isOpen
+        newInstance.marked = this.marked
+        return newInstance
+    }
 }
+
+val aroundOffset = listOf(
+        Pair(-1, -1), Pair(0, -1), Pair(1, -1),
+        Pair(-1, 0), Pair(1, 0),
+        Pair(-1, 1), Pair(0, 1), Pair(1, 1))
 
 class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit) {
     private var map = MutableList(width * height) { Cell(CellValue.Null) }
@@ -50,14 +73,9 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
 
     }
 
-    private val directsForCalculate = listOf(
-            Pair(-1, -1), Pair(0, -1), Pair(1, -1),
-            Pair(-1, 0), Pair(1, 0),
-            Pair(-1, 1), Pair(0, 1), Pair(1, 1))
-
     private fun calculate(x: Int, y: Int) {
         var c = 0
-        directsForCalculate.forEach {
+        aroundOffset.forEach {
             try {
                 if (getRealCell(x + it.first, y + it.second).value == CellValue.Bomb)
                     c++
@@ -75,7 +93,7 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
     }
 
     /*То, что получает игрок, а именно для неоткрытой клетки выдаем ему клетку с типом "неизвестно",
-    чтобы нельзя было хакнуть модель и узнать координаты всех мин*/
+    чтобы нельзя было обмануть игру и узнать координаты всех мин*/
     fun getCell(x: Int, y: Int): Cell {
         checkArg(x, y)
         val c = map[y * width + x]
@@ -89,12 +107,13 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
     fun click(x: Int, y: Int) {
         if (gameOver) return
         checkArg(x, y)
-        if (map[y * width + x].isOpen) return
+        if (map[y * width + x].isOpen || map[y * width + x].marked) return
         counter++
         if (map[y * width + x].value == CellValue.Bomb) {
             gameOver()
         }
-
+        if (map.filter { it.value == CellValue.Bomb }.all { it.marked })
+            gameWin()
 
         openEmpty(x, y)
     }
@@ -144,6 +163,8 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
         }
         loseHandler(MsgType.WIN)
     }
+
+    fun getAllCells() = Array(height) { i -> Array(width) { j -> getCell(j, i) } }
 }
 
 enum class MsgType {
