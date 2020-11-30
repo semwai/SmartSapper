@@ -14,14 +14,14 @@ enum class CellValue(var value: Int) {
     Six(6),
     Seven(7),
     Eight(8),
-    Undefined(10)
+    Undefined(1000)
 }
 
 data class Cell(var value: CellValue) {
     var isOpen = false
     var marked = false
 
-    operator fun dec():Cell {
+    /*operator fun dec():Cell {
         val newValue = when (value) {
             //CellValue.One -> CellValue.Null
             CellValue.Two -> CellValue.One
@@ -37,7 +37,7 @@ data class Cell(var value: CellValue) {
         newInstance.isOpen = this.isOpen
         newInstance.marked = this.marked
         return newInstance
-    }
+    }*/
 }
 
 val aroundOffset = listOf(

@@ -96,6 +96,7 @@ abstract class App(private val width: Int = 6, private val height: Int = 5) : Ap
     }
 
     fun newGame() {
+        println("\n\n\nNEW GAME\n\n")
         model.newGame()
         cells.forEach { it.forEach { btn -> btn.style = stylebgr0 } }
         update()

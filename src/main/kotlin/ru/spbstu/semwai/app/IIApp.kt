@@ -42,15 +42,12 @@ class ScoreTable(private var Win: Int = 0, private var Lose: Int = 0) {
 
 class IIApp(width: Int, height: Int) : App(width, height) {
 
-    val solver: Solver by lazy { Solver(model, cells) }
+    private lateinit var solver: Solver
 
     private val score = ScoreTable()
 
-    private val timer = Timeline(KeyFrame(Duration.seconds(1.0), object : EventHandler<ActionEvent?> {
-        private var i = 1
-        override fun handle(event: ActionEvent?) {
-            solver.nextStep()
-        }
+    private val timer = Timeline(KeyFrame(Duration.seconds(0.05), {
+        solver.nextStep()
     }))
 
 
@@ -59,11 +56,13 @@ class IIApp(width: Int, height: Int) : App(width, height) {
             MsgType.WIN -> score.win()
             MsgType.LOSE -> score.lose()
         }
-        with(Alert(Alert.AlertType.INFORMATION, "Haha", ButtonType.NEXT)) {
+        with(Alert(Alert.AlertType.INFORMATION, msgType.toString(), ButtonType.NEXT)) {
             timer.stop()
             show()
+
             setOnCloseRequest {
                 newGame()
+                solver = Solver(model, cells)
                 timer.playFromStart()
             }
         }
@@ -75,6 +74,7 @@ class IIApp(width: Int, height: Int) : App(width, height) {
         root.add(Label().apply { textProperty().bind(score.scoreStr) })
         cells.forEach { it.forEach { btn -> btn.isDisable = true } }
         timer.cycleCount = Int.MAX_VALUE
+        solver = Solver(model, cells)
         timer.play()
         primaryStage.setOnCloseRequest {
             timer.stop()
