@@ -47,7 +47,7 @@ class IIApp(width: Int, height: Int) : App(width, height) {
 
     private val score = ScoreTable()
 
-    private val timer = Timeline(KeyFrame(Duration.seconds(0.01), EventHandler{
+    private val timer = Timeline(KeyFrame(Duration.seconds(0.5), EventHandler{
         solver.nextStep()
     }))
 
@@ -58,19 +58,19 @@ class IIApp(width: Int, height: Int) : App(width, height) {
             MsgType.LOSE -> score.lose()
         }
         with(Alert(Alert.AlertType.INFORMATION, msgType.toString(), ButtonType.NEXT)) {
-            /*timer.stop()
+            timer.stop()
             show()
 
             setOnCloseRequest {
                 newGame()
                 solver = GroupSolver(model, cells)
                 timer.playFromStart()
-            }*/
+            }/*
             timer.stop()
             newGame()
             solver = GroupSolver(model, cells)
             timer.playFromStart()
-
+*/
         }
     }
 
