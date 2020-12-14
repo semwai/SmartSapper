@@ -14,6 +14,7 @@ enum class CellValue(var value: Int) {
     Six(6),
     Seven(7),
     Eight(8),
+
     Undefined(1000)
 }
 
@@ -42,7 +43,7 @@ data class Cell(var value: CellValue) {
 
 val aroundOffset = listOf(
         Pair(-1, -1), Pair(0, -1), Pair(1, -1),
-        Pair(-1, 0), Pair(1, 0),
+        Pair(-1, 0),              Pair(1, 0),
         Pair(-1, 1), Pair(0, 1), Pair(1, 1))
 
 class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit) {
@@ -62,7 +63,7 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
         gameOver = false
         map = MutableList(width * height) { Cell(CellValue.Null) }
         val r = Random()
-        for (i in 1..(width * height / 13)) {
+        for (i in 1..(width * height / 10)) {
             map[r.nextInt(width * height - 1)] = Cell(CellValue.Bomb)
         }
         for (i in 0 until height) {
@@ -112,7 +113,9 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
         if (map[y * width + x].value == CellValue.Bomb) {
             gameOver()
         }
-        if (map.filter { it.value == CellValue.Bomb }.all { it.marked })
+        //для победы не обязательно открывать все бомбы. достаточно открыть все цифры.
+        if (map.filter { it.value == CellValue.Bomb }.all { it.marked }
+                && map.filter { it.value != CellValue.Bomb }.all { !it.marked })
             gameWin()
 
         openEmpty(x, y)
@@ -131,10 +134,10 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
     //Вынес за функцию чтобы не создавать массив для каждой клетки
 
     private fun openEmpty(x: Int, y: Int) {
-        val directsForOpenEmpty = listOf(Pair(-1, 0), Pair(0, -1), Pair(1, 0), Pair(0, 1))
+        //val directsForOpenEmpty = listOf(Pair(-1, 0), Pair(0, -1), Pair(1, 0), Pair(0, 1))
         if (x >= width || y >= height || x < 0 || y < 0 || gameOver) return
         map[y * width + x].isOpen = true
-        directsForOpenEmpty.forEach {
+        aroundOffset.forEach {
             //обернул в try, т.к. в граничных клетках возможен вызов за карту.
             try {
                 val cell = getRealCell(x, y)
@@ -148,12 +151,15 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
 
     }
 
-    private fun gameOver() {
+    fun gameOver() {
         gameOver = true
         map.forEach {
             it.isOpen = true
         }
-        loseHandler(MsgType.LOSE)
+        if (counter > 1)
+            loseHandler(MsgType.LOSE)
+        else
+            loseHandler(MsgType.FIRST_STEP_LOSE)
     }
 
     private fun gameWin() {
@@ -164,10 +170,13 @@ class Sapper(val width: Int, val height: Int, val loseHandler: (MsgType) -> Unit
         loseHandler(MsgType.WIN)
     }
 
+    fun bombCount() = map.count { it.value == CellValue.Bomb }
+
     fun getAllCells() = Array(height) { i -> Array(width) { j -> getCell(j, i) } }
 }
 
 enum class MsgType {
     WIN,
-    LOSE
+    LOSE,
+    FIRST_STEP_LOSE
 }

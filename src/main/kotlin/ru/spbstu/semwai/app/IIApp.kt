@@ -17,6 +17,7 @@ import javafx.scene.input.MouseEvent
 import javafx.stage.Stage
 import javafx.util.Duration
 import javafx.util.converter.NumberStringConverter
+import ru.spbstu.semwai.model.GroupSolver
 import ru.spbstu.semwai.model.MsgType
 import ru.spbstu.semwai.model.Solver
 import tornadofx.*
@@ -42,11 +43,11 @@ class ScoreTable(private var Win: Int = 0, private var Lose: Int = 0) {
 
 class IIApp(width: Int, height: Int) : App(width, height) {
 
-    private lateinit var solver: Solver
+    private lateinit var solver: GroupSolver
 
     private val score = ScoreTable()
 
-    private val timer = Timeline(KeyFrame(Duration.seconds(0.05), {
+    private val timer = Timeline(KeyFrame(Duration.seconds(0.01), EventHandler{
         solver.nextStep()
     }))
 
@@ -57,14 +58,19 @@ class IIApp(width: Int, height: Int) : App(width, height) {
             MsgType.LOSE -> score.lose()
         }
         with(Alert(Alert.AlertType.INFORMATION, msgType.toString(), ButtonType.NEXT)) {
-            timer.stop()
+            /*timer.stop()
             show()
 
             setOnCloseRequest {
                 newGame()
-                solver = Solver(model, cells)
+                solver = GroupSolver(model, cells)
                 timer.playFromStart()
-            }
+            }*/
+            timer.stop()
+            newGame()
+            solver = GroupSolver(model, cells)
+            timer.playFromStart()
+
         }
     }
 
@@ -74,7 +80,7 @@ class IIApp(width: Int, height: Int) : App(width, height) {
         root.add(Label().apply { textProperty().bind(score.scoreStr) })
         cells.forEach { it.forEach { btn -> btn.isDisable = true } }
         timer.cycleCount = Int.MAX_VALUE
-        solver = Solver(model, cells)
+        solver = GroupSolver(model, cells)
         timer.play()
         primaryStage.setOnCloseRequest {
             timer.stop()

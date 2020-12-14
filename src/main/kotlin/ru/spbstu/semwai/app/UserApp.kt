@@ -16,6 +16,7 @@ class UserApp(width: Int, height: Int) : App(width, height) {
         alert.contentText = when (type) {
             MsgType.WIN -> "Ты победил"
             MsgType.LOSE -> "Ты проиграл"
+            MsgType.FIRST_STEP_LOSE -> "Проигрыш при первом ходе не считается"
         }
         alert.show()
     }

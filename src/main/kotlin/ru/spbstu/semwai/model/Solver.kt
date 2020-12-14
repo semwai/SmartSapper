@@ -65,7 +65,7 @@ class SolverCollection(private val model: Sapper, input: Array<Array<Cell>>, pri
 
 class Solver(private val model: Sapper, private val buttons: MutableList<MutableList<Button>>) {
 
-    private val mask = Array(model.width) { IntArray(model.height) { 0 } }
+    private val mask = Array(model.height) { IntArray(model.width) { 0 } }
     private var first = true
 
     fun nextStep() {
@@ -86,10 +86,11 @@ class Solver(private val model: Sapper, private val buttons: MutableList<Mutable
             val candidate = c.bestMove() //массив из возможных ходов вокруг выбранной ячейки
             val bomb = candidate.firstOrNull() //если у нас только один кандидат, то это гарантированно бомба.
             if (bomb != null) {
-                if (candidate.size > 4) { //однако вокруг 1 может быть 8 неоткрытых ячеек. Если их > 4,
+                if (candidate.size > 3) { //однако вокруг 1 может быть 8 неоткрытых ячеек. Если их > 4,
                     //то просто идем, понимая что можем подорваться
                     println("!Иду на $bomb\n\n")
                     open(bomb.first, bomb.second)
+
                 } else {
                     /*если вокруг лучшей ячейки мало возможных кандидатов
                     если мы учитываем, что рядом были раскрыты бомбы, то надо за каждое раскрытие отнимать 1 у соседних с бомбой
@@ -110,7 +111,8 @@ class Solver(private val model: Sapper, private val buttons: MutableList<Mutable
                 val next = c.nextUndefined()
                 if (next == null) {
                     //Не оказалось вообще вариантов с подходящей неизвестной ячейкой (
-                    first = true
+                    println("Все бомбы помечены. Некоторые ячейки ошибочно помечены вместо бомб")
+                    model.gameOver()
                 } else {
                     println("Иду на $next\n\n")
                     open(next.first, next.second)
